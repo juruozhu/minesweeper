@@ -1,0 +1,449 @@
+/* ===== 经典扫雷 - 复古像素风 ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  /* 触控：阻止浏览器默认滚动/缩放/点按，交给游戏处理 */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+:root {
+  --clr-bg: #c0c0c0;          /* 经典灰 */
+  --clr-border-light: #ffffff;
+  --clr-border-mid: #c0c0c0;
+  --clr-border-dark: #808080;
+  --clr-face: #e4e4e4;
+  --cell-size: 32px;
+}
+
+html, body {
+  height: 100%;
+}
+
+/* 禁用图片的原生拖拽，避免干扰指针手势（长按/拖动判定） */
+img {
+  -webkit-user-drag: none;
+}
+
+body {
+  overflow: hidden;
+  font-family: "Segoe UI", "微软雅黑", "Microsoft YaHei", sans-serif;
+  background: #4a7a4a; /* 经典宝绿桌面 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* ===== 窗口框架（固定布局，手机无需拖动/缩放）===== */
+#win {
+  position: relative;
+  background: var(--clr-bg);
+  border-top: 3px solid var(--clr-border-light);
+  border-left: 3px solid var(--clr-border-light);
+  border-right: 3px solid var(--clr-border-dark);
+  border-bottom: 3px solid var(--clr-border-dark);
+  box-shadow: 11px 11px 22px rgba(0, 0, 0, 0.45);
+  max-width: 98vw;
+  max-height: 98vh;
+}
+
+/* 标题栏（经典蓝） */
+#titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #1a3cd4, #0d1f7d);
+  padding: 4px 4px 4px 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+#title-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+#title-text {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#app {
+  background: var(--clr-bg);
+  padding: 12px;
+}
+
+#header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+#header h1 {
+  font-size: 26px;
+  color: #1a1a1a;
+  font-weight: 700;
+}
+#header h1 span {
+  font-size: 14px;
+  color: #555;
+  font-weight: 400;
+}
+
+/* 难度按钮 */
+#difficulty {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+#difficulty button {
+  background: var(--clr-bg);
+  border-top: 3px solid var(--clr-border-light);
+  border-left: 3px solid var(--clr-border-light);
+  border-right: 3px solid var(--clr-border-dark);
+  border-bottom: 3px solid var(--clr-border-dark);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.25;
+  color: #1a1a1a;
+  font-family: inherit;
+}
+#difficulty button:active {
+  border-top: 3px solid var(--clr-border-dark);
+  border-left: 3px solid var(--clr-border-dark);
+  border-right: 3px solid var(--clr-border-light);
+  border-bottom: 3px solid var(--clr-border-light);
+}
+#difficulty button.active {
+  box-shadow: inset 0 0 0 2px #222;
+}
+
+/* ===== 操作工具（排雷 / 插旗） ===== */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+#toolbarLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+#toolbar .tool {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-face);
+  border-top: 3px solid var(--clr-border-light);
+  border-left: 3px solid var(--clr-border-light);
+  border-right: 3px solid var(--clr-border-dark);
+  border-bottom: 3px solid var(--clr-border-dark);
+  cursor: pointer;
+  padding: 4px;
+}
+#toolbar .tool:active {
+  border-top: 3px solid var(--clr-border-dark);
+  border-left: 3px solid var(--clr-border-dark);
+  border-right: 3px solid var(--clr-border-light);
+  border-bottom: 3px solid var(--clr-border-light);
+}
+/* 激活（当前模式）高亮为凹陷 + 描边 */
+#toolbar .tool.active {
+  border-top: 3px solid var(--clr-border-dark);
+  border-left: 3px solid var(--clr-border-dark);
+  border-right: 3px solid var(--clr-border-light);
+  border-bottom: 3px solid var(--clr-border-light);
+  background: #d9d9d9;
+  box-shadow: inset 0 0 0 2px #ffd800;
+}
+#toolbar .tool .tool-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* ===== 设置弹窗 ===== */
+#settingsOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.25);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+#settingsOverlay.open {
+  display: flex;
+}
+
+#settingsModal {
+  background: var(--clr-bg);
+  border-top: 3px solid var(--clr-border-light);
+  border-left: 3px solid var(--clr-border-light);
+  border-right: 3px solid var(--clr-border-dark);
+  border-bottom: 3px solid var(--clr-border-dark);
+  box-shadow: 8px 8px 18px rgba(0, 0, 0, 0.4);
+  width: 320px;
+  max-width: 100%;
+}
+#settingsTitlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: linear-gradient(180deg, #1a3cd4, #0d1f7d);
+  padding: 4px 6px 4px 10px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+#close-settings {
+  width: 22px;
+  height: 22px;
+  background: var(--clr-bg);
+  border-top: 2px solid var(--clr-border-light);
+  border-left: 2px solid var(--clr-border-light);
+  border-right: 2px solid var(--clr-border-dark);
+  border-bottom: 2px solid var(--clr-border-dark);
+  font-size: 12px;
+  line-height: 1;
+  color: #111;
+  cursor: pointer;
+  padding: 0;
+}
+#close-settings:active {
+  border-top: 2px solid var(--clr-border-dark);
+  border-left: 2px solid var(--clr-border-dark);
+  border-right: 2px solid var(--clr-border-light);
+  border-bottom: 2px solid var(--clr-border-light);
+}
+#settingsBody {
+  padding: 12px 14px 14px;
+}
+.setting-group {
+  margin-bottom: 16px;
+}
+.setting-group:last-child {
+  margin-bottom: 0;
+}
+.setting-group h3 {
+  font-size: 13px;
+  color: #222;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--clr-border-mid);
+  padding-bottom: 3px;
+}
+.setting-group .hint-text {
+  font-size: 11px;
+  color: #555;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* 自定义难度输入 */
+.custom-fields {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.custom-fields input[type="number"] {
+  width: 52px;
+  padding: 3px 4px;
+  font-size: 13px;
+  border: 2px inset var(--clr-border-mid);
+  background: #fff;
+  font-family: inherit;
+  text-align: center;
+}
+.custom-fields span {
+  font-size: 12px;
+  color: #444;
+}
+#applyCustom {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  cursor: pointer;
+  background: var(--clr-bg);
+  border-top: 2px solid var(--clr-border-light);
+  border-left: 2px solid var(--clr-border-light);
+  border-right: 2px solid var(--clr-border-dark);
+  border-bottom: 2px solid var(--clr-border-dark);
+  font-family: inherit;
+}
+
+/* 状态栏（经典凸起面板） */
+#statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px;
+  margin-bottom: 12px;
+  border-top: 3px solid var(--clr-border-dark);
+  border-left: 3px solid var(--clr-border-dark);
+  border-right: 3px solid var(--clr-border-light);
+  border-bottom: 3px solid var(--clr-border-light);
+}
+
+/* LED 数字显示（像素图） */
+.disp {
+  width: 78px;
+  height: 42px;
+  background: #1a0202;
+  border-top: 2px solid #000;
+  border-left: 2px solid #000;
+  border-right: 2px solid #666;
+  border-bottom: 2px solid #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 重置按钮（经典黄脸表情，去掉周围边框，贴合背景） */
+#resetBtn {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-face);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+#resetBtn:active {
+  background: var(--clr-border-mid);
+}
+#resetBtn .face-pixel {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* 棋盘外层：负责滚动（触摸可拖动滚动） */
+#boardWrap {
+  max-width: 92vw;
+  max-height: 58vh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+
+/* 棋盘本体：禁用触摸手势，长按/单击交给游戏判定 */
+#board {
+  display: inline-grid;
+  border-top: 3px solid var(--clr-border-dark);
+  border-left: 3px solid var(--clr-border-dark);
+  border-right: 3px solid var(--clr-border-light);
+  border-bottom: 3px solid var(--clr-border-light);
+  outline: none;
+  touch-action: none;
+}
+
+/* 格子 */
+.cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  background: var(--clr-face);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: "Segoe UI", "Courier New", monospace;
+  border-top: 3px solid var(--clr-border-light);
+  border-left: 3px solid var(--clr-border-light);
+  border-right: 3px solid var(--clr-border-dark);
+  border-bottom: 3px solid var(--clr-border-dark);
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* 已翻开 */
+.cell.revealed {
+  border: 1px solid var(--clr-border-dark);
+  background: var(--clr-bg);
+  cursor: default;
+}
+
+/* 爆雷红底 */
+.cell.mine-hit {
+  background: #f00;
+}
+
+/* 棋盘像素数字 / 地雷（整格充满） */
+.cell .grid-digit,
+.cell .grid-mine {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+
+/* 顶部 LED 像素数字（计雷器 / 计时器）：.disp 已是 flex 居中，此处只补间距 */
+.disp.pixel-led {
+  gap: 3px;
+  padding: 0 4px;
+  overflow: hidden;
+}
+.disp.pixel-led .led-digit {
+  height: 78%;
+  max-height: 34px;
+  width: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+
+/* 旗帜：居中留白显示 */
+.cell .grid-flag {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  display: block;
+}
+
+#footer {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #222;
+}
+#footer #msg {
+  margin-top: 4px;
+  font-weight: 600;
+  min-height: 18px;
+}
+
+/* 滚动条样式 */
+#boardWrap::-webkit-scrollbar { width: 14px; height: 14px; }
+#boardWrap::-webkit-scrollbar-thumb {
+  background: var(--clr-border-dark);
+  border: 3px solid var(--clr-bg);
+}
+
+@media (max-width: 600px) {
+  .disp { width: 60px; }
+  #resetBtn { width: 44px; height: 44px; }
+}

@@ -1,0 +1,42 @@
+# ============================================
+#  扫雷 Minesweeper - Git 忽略规则
+# ============================================
+
+# ---------- Node / Capacitor 依赖 ----------
+node_modules/
+
+# ---------- 安卓构建产物与本地配置 ----------
+.gradle/
+build/
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+local.properties
+android/local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.iml
+
+# ---------- 安装包（改用 GitHub Releases 发布）----------
+*.apk
+*.aab
+
+# ---------- 编辑器 / 系统 ----------
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 日志 / 临时文件 ----------
+*.log
+*.tmp
+*.bak
+_check_*
+_*.ps1
+
+# ---------- 本机专用脚本（不适合公开）----------
+docs/fix-hosts.ps1

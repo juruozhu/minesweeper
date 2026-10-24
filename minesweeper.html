@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>经典扫雷 Minesweeper</title>
+  <link rel="stylesheet" href="minesweeper.css">
+</head>
+<body>
+  <!-- 游戏窗口（固定布局，移动端无需拖动/缩放） -->
+  <div id="win">
+    <!-- 标题栏 -->
+    <div id="titlebar">
+      <div id="title-icon">💣</div>
+      <span id="title-text">扫雷 Minesweeper</span>
+    </div>
+
+    <!-- 窗口内容 -->
+    <div id="app">
+      <header id="header">
+        <h1>扫雷 <span>Minesweeper</span></h1>
+      </header>
+
+      <!-- 难度选择 -->
+      <nav id="difficulty">
+        <button data-diff="beginner" class="active">初级<br>9×9  ·  10雷</button>
+        <button data-diff="intermediate">中级<br>16×16 · 40雷</button>
+        <button data-diff="custom">自定义</button>
+      </nav>
+
+      <!-- 操作工具（排雷 / 插旗模式切换） -->
+      <div id="toolbar">
+        <span id="toolbarLabel">单击切换：</span>
+        <button id="toolReveal" class="tool active" title="排雷模式：单击翻开">
+          <img id="toolRevealIcon" class="tool-icon" alt="">
+        </button>
+        <button id="toolFlag" class="tool" title="插旗模式：单击插旗">
+          <img id="toolFlagIcon" class="tool-icon" alt="">
+        </button>
+      </div>
+
+      <!-- 状态栏（经典凸起面板） -->
+      <div id="statusbar">
+        <div id="minesDisp" class="disp" aria-hidden="true"></div>
+        <button id="resetBtn" title="可点击表情重开">
+          <img class="face-pixel" alt="">
+        </button>
+        <div id="timerDisp" class="disp" aria-hidden="true"></div>
+      </div>
+
+      <!-- 棋盘：外层负责滚动，内层棋盘禁用触摸手势以便长按判定 -->
+      <div id="boardWrap">
+        <div id="board"></div>
+      </div>
+
+      <footer id="footer">
+        <p id="hint">单击：翻开 &nbsp;|&nbsp; 长按：插旗 / 取消旗</p>
+        <p id="msg"></p>
+      </footer>
+    </div>
+
+    <!-- 设置弹窗（覆盖层） -->
+    <div id="settingsOverlay">
+      <div id="settingsModal">
+        <div id="settingsTitlebar">
+          <span>设置</span>
+          <button id="close-settings" title="关闭">✕</button>
+        </div>
+        <div id="settingsBody">
+          <div class="setting-group">
+            <h3>自定义难度</h3>
+            <div class="custom-fields">
+              <input type="number" id="customRows" min="5" max="20" value="9">
+              <span>×</span>
+              <input type="number" id="customCols" min="5" max="20" value="9">
+              <span> 雷</span>
+              <input type="number" id="customMines" min="1" value="10">
+              <button id="applyCustom">应用</button>
+            </div>
+            <p class="hint-text">行·列范围 5–20（适配手机屏幕）；雷数自动限制为「总格数 − 9」（留出首击安全区）。<br>应用后请在难度栏选择「自定义」查看。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets.js"></script>
+  <script src="minesweeper.js"></script>
+</body>
+</html>
